@@ -37,7 +37,7 @@ RUN pip install --no-cache-dir mmengine
 RUN pip install --no-cache-dir mmcv==2.1.0
 RUN pip install --no-cache-dir 'mmdet>=3.0.0'
 RUN pip install --no-cache-dir 'mmsegmentation>=1.0.0'
-RUN pip install --no-cache-dir 'mmrotate>=1.0.0'
+RUN pip install --no-cache-dir 'mmrotate>=0.3.4'
 RUN pip install --no-cache-dir 'mmpretrain>=1.0.0'
 RUN pip install --no-cache-dir 'mmrazor>=1.0.0'
 RUN pip install --no-cache-dir 'ultralytics>=8.0.0' 'thop' 'timm' 'pycocotools'
