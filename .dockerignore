@@ -1,0 +1,29 @@
+# Dependencies and build artifacts
+requirements/*.egg-info
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+build/
+*.whl
+*.bak
+
+# Docker
+*.tar.gz
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local environment specific
+Dockerfile.local-test

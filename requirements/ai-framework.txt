@@ -1,0 +1,10 @@
+# AI Framework dependencies
+# NOTE: torch/torchvision/torch_npu are pre-installed in the base Ascend image
+# This file only lists additional packages needed
+thop>=0.1.1
+timm>=0.9.0
+pycocotools>=2.0.0
+
+# mmcv/mmengine will be installed separately with specific versions
+# mmcv==2.1.0 (with NPU support)
+# mmengine>=0.7.0

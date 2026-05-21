@@ -1,0 +1,23 @@
+# Base Python dependencies - core libs for deep learning projects
+# Pinned versions per requirements document
+numpy==1.23.5
+pyyaml>=6.0
+typing-extensions>=4.0.0
+future>=0.18.0
+six>=1.16.0
+requests>=2.28.0
+dataclasses>=0.6;python_version<"3.7"
+pillow>=9.0.0
+tqdm>=4.64.0
+pytz>=2022.1
+loguru>=0.6.0
+easydict>=1.9
+tabulate>=0.8.0
+zipp>=3.0.0
+importlib-metadata>=4.0.0;python_version<"3.10"
+python-dateutil>=2.8.0
+packaging>=21.0
+lazy-loader>=0.1
+psutil>=5.9.0
+openblas>=0.3.0
+pyparsing>=3.0.0

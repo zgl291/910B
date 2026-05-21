@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  ascend-training:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      args:
+        PYTORCH_IMAGE: ${PYTORCH_IMAGE:-ascendai/pytorch:2.1.0-cann8.0.RC2-py3.9}
+    image: ascend-remote-sensing:v1.0
+    container_name: ascend-rs
+    runtime: nvidia
+    devices:
+      - /dev/davinci0
+      - /dev/davinci_manager
+      - /dev/devmm_svm
+      - /dev/hisi_hdc
+    volumes:
+      - /usr/local/Ascend/driver:/usr/local/Ascend/driver:ro
+      - /usr/local/Ascend/add-ons/:/usr/local/Ascend/add-ons/:ro
+      - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi:ro
+      - ./workspace:/workspace
+    environment:
+      - ASCEND_OPP_PATH=/usr/local/Ascend/opp
+      - TOOLCHAIN_HOME=/usr/local/Ascend/toolkit
+      - ASCEND_RT_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+      - HCCL_CONNECT_TIMEOUT=120
+      - HCCL_EXEC_TIMEOUT=0
+      - PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+    network_mode: host
+    ipc: host
+    stdin_open: true
+    tty: true

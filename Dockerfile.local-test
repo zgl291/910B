@@ -1,0 +1,89 @@
+# =============================================================================
+# Local Test Dockerfile - x86 CPU only (for Windows/development testing)
+# This image does NOT include NPU support - it's for validating:
+#   - Python package installation
+#   - Import correctness
+#   - Basic training pipeline (on CPU)
+# =============================================================================
+
+FROM ubuntu:22.04
+
+LABEL description="Local test environment for Ascend remote sensing project (CPU only)"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+# ---- System packages ----
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake \
+    ninja-build \
+    gcc \
+    g++ \
+    gfortran \
+    make \
+    perl \
+    vim \
+    openssh-client \
+    default-jdk \
+    git \
+    wget \
+    curl \
+    zip \
+    unzip \
+    libffi-dev \
+    libssl-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libtk8.6 \
+    libbz2-dev \
+    liblzma-dev \
+    zlib1g-dev \
+    libgdal-dev \
+    python3 \
+    python3-pip \
+    python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symlinks
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+# ---- Python base packages ----
+COPY requirements/base.txt /tmp/requirements/base.txt
+RUN pip install --no-cache-dir -r /tmp/requirements/base.txt
+
+# ---- Image processing ----
+COPY requirements/image-processing.txt /tmp/requirements/image-processing.txt
+RUN pip install --no-cache-dir -r /tmp/requirements/image-processing.txt
+
+# ---- Remote sensing ----
+COPY requirements/remote-sensing.txt /tmp/requirements/remote-sensing.txt
+RUN pip install --no-cache-dir -r /tmp/requirements/remote-sensing.txt
+
+# ---- Scientific computing ----
+COPY requirements/scientific.txt /tmp/requirements/scientific.txt
+RUN pip install --no-cache-dir -r /tmp/requirements/scientific.txt
+
+# ---- AI Framework (CPU version of PyTorch for testing) ----
+# Install CPU-only PyTorch for local validation
+RUN pip install --no-cache-dir \
+    torch --index-url https://download.pytorch.org/whl/cpu \
+    torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# Install framework packages that work on CPU
+RUN pip install --no-cache-dir \
+    'mmengine>=0.7.0' \
+    'timm>=0.9.0' \
+    'thop' \
+    'pycocotools' \
+    'onnx' \
+    'ultralytics>=8.0.0'
+
+# ---- Copy workspace ----
+COPY scripts/ /workspace/scripts/
+COPY migration/ /workspace/migration/
+
+WORKDIR /workspace
+
+# Run verification on startup
+CMD ["python", "/workspace/scripts/verify_env.py"]

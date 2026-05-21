@@ -1,0 +1,68 @@
+# =============================================================================
+# Production Dockerfile - Single stage for Ascend 910B
+# This is the one actually used on the 910B server
+# =============================================================================
+
+ARG PYTORCH_IMAGE=ascendai/pytorch:2.1.0-cann8.0.RC2-py3.9
+FROM ${PYTORCH_IMAGE}
+
+LABEL maintainer="your-team"
+LABEL description="Remote sensing AI training environment for Ascend 910B"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+# ---- System packages ----
+RUN dnf install -y epel-release 2>/dev/null || yum install -y epel-release 2>/dev/null || true && \
+    dnf install -y --allowerasing \
+        cmake ninja-build gcc gcc-c++ gcc-gfortran make \
+        perl vim-enhanced openssh-clients openssh-server \
+        java-1.8.0-openjdk-devel git wget curl zip unzip \
+        libffi-devel openssl-devel readline-devel sqlite-devel \
+        tk-devel xz-devel zlib-devel \
+        2>/dev/null && \
+    dnf clean all
+
+# ---- Install all Python requirements ----
+COPY requirements/ /tmp/requirements/
+
+RUN pip install --no-cache-dir -r /tmp/requirements/base.txt && \
+    pip install --no-cache-dir -r /tmp/requirements/image-processing.txt && \
+    pip install --no-cache-dir -r /tmp/requirements/remote-sensing.txt && \
+    pip install --no-cache-dir -r /tmp/requirements/scientific.txt && \
+    pip install --no-cache-dir -r /tmp/requirements/distributed.txt
+
+# ---- AI Framework packages (OpenMMLab ecosystem) ----
+# Install mmcv-full with NPU support first
+RUN pip install --no-cache-dir mmcv==2.1.0 mmengine && \
+    pip install --no-cache-dir \
+        'mmdet>=3.0.0' \
+        'mmsegmentation>=1.0.0' \
+        'mmrotate>=1.0.0' \
+        'mmpretrain>=1.0.0' \
+        'mmrazor>=1.0.0' \
+        'ultralytics>=8.0.0' \
+        'thop' 'timm' 'pycocotools'
+
+# ---- open-CD (remote sensing change detection) ----
+RUN cd /opt && \
+    git clone https://github.com/likyoo/open-cd.git && \
+    cd open-cd && \
+    pip install --no-cache-dir -v -e .
+
+# ---- apex (Ascend-compatible version) ----
+RUN cd /opt && \
+    git clone https://gitee.com/ascend/apex.git && \
+    cd apex && \
+    pip install --no-cache-dir -v .
+
+# ---- Copy workspace files ----
+COPY scripts/ /workspace/scripts/
+COPY config/ /workspace/config/
+
+RUN mkdir -p /workspace/models /workspace/data /workspace/output
+
+WORKDIR /workspace
+
+CMD ["bash"]
