@@ -33,16 +33,14 @@ RUN pip install --no-cache-dir -r /tmp/requirements/scientific.txt
 RUN pip install --no-cache-dir -r /tmp/requirements/distributed.txt
 
 # ---- AI Framework packages (OpenMMLab ecosystem) ----
-# Install mmcv-full with NPU support first
-RUN pip install --no-cache-dir mmcv==2.1.0 mmengine && \
-    pip install --no-cache-dir \
-        'mmdet>=3.0.0' \
-        'mmsegmentation>=1.0.0' \
-        'mmrotate>=1.0.0' \
-        'mmpretrain>=1.0.0' \
-        'mmrazor>=1.0.0' \
-        'ultralytics>=8.0.0' \
-        'thop' 'timm' 'pycocotools'
+RUN pip install --no-cache-dir mmengine
+RUN pip install --no-cache-dir mmcv==2.1.0
+RUN pip install --no-cache-dir 'mmdet>=3.0.0'
+RUN pip install --no-cache-dir 'mmsegmentation>=1.0.0'
+RUN pip install --no-cache-dir 'mmrotate>=1.0.0'
+RUN pip install --no-cache-dir 'mmpretrain>=1.0.0'
+RUN pip install --no-cache-dir 'mmrazor>=1.0.0'
+RUN pip install --no-cache-dir 'ultralytics>=8.0.0' 'thop' 'timm' 'pycocotools'
 
 # ---- open-CD (remote sensing change detection) ----
 RUN cd /opt && \
