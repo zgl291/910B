@@ -3,7 +3,7 @@
 # This is the one actually used on the 910B server
 # =============================================================================
 
-ARG PYTORCH_IMAGE=ascendai/pytorch:2.1.0-cann8.0.RC2-py3.9
+ARG PYTORCH_IMAGE=ascendai/pytorch:ubuntu-python3.8-cann8.0.rc1.beta1-pytorch2.1.0
 FROM ${PYTORCH_IMAGE}
 
 LABEL maintainer="your-team"

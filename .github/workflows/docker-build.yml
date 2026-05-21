@@ -78,7 +78,7 @@ jobs:
           echo "=== Step 2: Build ARM64 image ==="
           docker buildx build \
             --platform linux/arm64 \
-            --build-arg PYTORCH_IMAGE=ascendai/pytorch:2.1.0-cann8.0.RC2-py3.9 \
+            --build-arg PYTORCH_IMAGE=ascendai/pytorch:ubuntu-python3.8-cann8.0.rc1.beta1-pytorch2.1.0 \
             -f Dockerfile.production \
             -t "${{ env.IMAGE }}:${{ github.event.inputs.docker_tag || 'latest' }}" \
             --push \
