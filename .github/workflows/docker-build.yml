@@ -14,28 +14,23 @@ env:
   IMAGE: ghcr.io/${{ github.repository }}
   TAG: ${{ github.event.inputs.docker_tag || 'latest' }}
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   # ================================================================
-  # Step 1: Minimal sanity check - can we build ANY docker image?
+  # Step 1: Sanity check
   # ================================================================
   sanity-check:
     name: Sanity Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Test docker info
-        run: |
-          docker info
-          docker buildx version
-          docker buildx ls
-
-      - name: Test minimal build
+      - name: Test docker build
         run: |
           echo "FROM alpine:latest" > /tmp/test.Dockerfile
           echo "RUN echo hello" >> /tmp/test.Dockerfile
@@ -49,11 +44,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push minimal test image
+      - name: Push test image
         run: |
-          docker tag test-build ${{ env.IMAGE }}:sanity-check
-          docker push ${{ env.IMAGE }}:sanity-check
-          echo "Sanity check image pushed"
+          docker tag test-build ${{ env.IMAGE }}:sanity
+          docker push ${{ env.IMAGE }}:sanity
 
   # ================================================================
   # Step 2: Build CPU test image
@@ -63,41 +57,26 @@ jobs:
     needs: sanity-check
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show Dockerfile
-        run: |
-          echo "=== Dockerfile.local-test ==="
-          cat Dockerfile.local-test
-          echo ""
-          echo "=== requirements files ==="
-          ls -la requirements/
-          for f in requirements/*.txt; do
-            echo "--- $f ---"
-            cat "$f"
-            echo ""
-          done
-
       - name: Login to GHCR
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
-            -u "${{ github.actor }}" --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build CPU image
-        run: |
-          docker build \
-            -f Dockerfile.local-test \
-            -t "${{ env.IMAGE }}:cpu-test-${{ env.TAG }}" \
-            .
-
-      - name: Push CPU image
-        run: |
-          docker push "${{ env.IMAGE }}:cpu-test-${{ env.TAG }}"
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.local-test
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE }}:cpu-test-${{ env.TAG }}
+          provenance: false
 
   # ================================================================
   # Step 3: Build ARM64 production image
@@ -107,9 +86,6 @@ jobs:
     needs: build-cpu
     runs-on: ubuntu-latest
     timeout-minutes: 360
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -126,46 +102,23 @@ jobs:
         with:
           platforms: arm64
 
-      - name: Show Dockerfile
-        run: |
-          echo "=== Dockerfile.production ==="
-          cat Dockerfile.production
-          echo ""
-          echo "=== BASE IMAGE ==="
-          echo "ascendai/pytorch:ubuntu-python3.8-cann8.0.rc1.beta1-pytorch2.1.0"
-
       - name: Login to GHCR
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
-            -u "${{ github.actor }}" --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Test pull base image
-        run: |
-          echo "Trying to pull base image (timeout 5min)..."
-          timeout 300 docker pull --platform linux/arm64 \
-            ascendai/pytorch:ubuntu-python3.8-cann8.0.rc1.beta1-pytorch2.1.0 || {
-            echo "FAILED to pull base image. Trying alternative tags..."
-            for tag in \
-              "ascendai/pytorch:ubuntu-python3.8-cann8.0.rc1-pytorch2.1.0" \
-              "ascendai/pytorch:ubuntu-22.04-python3.8-cann8.0.rc1-pytorch2.1.0" \
-              "ascendai/pytorch:2.1.0-cann8.0.rc1-py3.8" \
-            ; do
-              echo "Trying: $tag"
-              timeout 60 docker pull --platform linux/arm64 "$tag" && {
-                echo "SUCCESS with: $tag"
-                echo "FOUND_BASE_IMAGE=$tag" >> $GITHUB_ENV
-                break
-              } || echo "Failed: $tag"
-            done
-          }
-          echo "Base image pull complete (or will use Dockerfile default)"
-
-      - name: Build ARM64 image
-        run: |
-          docker buildx build \
-            --platform linux/arm64 \
-            -f Dockerfile.production \
-            -t "${{ env.IMAGE }}:arm64-${{ env.TAG }}" \
-            -t "${{ env.IMAGE }}:${{ env.TAG }}" \
-            --push \
-            .
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.production
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ env.TAG }}
+            ${{ env.IMAGE }}:arm64-${{ env.TAG }}
+          build-args: |
+            PYTORCH_IMAGE=ascendai/pytorch:ubuntu-python3.8-cann8.0.rc1.beta1-pytorch2.1.0
+          provenance: false
