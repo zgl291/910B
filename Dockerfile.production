@@ -14,15 +14,14 @@ ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
 # ---- System packages ----
-RUN dnf install -y epel-release 2>/dev/null || yum install -y epel-release 2>/dev/null || true && \
-    dnf install -y --allowerasing \
-        cmake ninja-build gcc gcc-c++ gcc-gfortran make \
-        perl vim-enhanced openssh-clients openssh-server \
-        java-1.8.0-openjdk-devel git wget curl zip unzip \
-        libffi-devel openssl-devel readline-devel sqlite-devel \
-        tk-devel xz-devel zlib-devel \
-        2>/dev/null && \
-    dnf clean all
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        cmake ninja-build gcc g++ gfortran make \
+        perl vim openssh-client openssh-server \
+        default-jre-headless git wget curl zip unzip \
+        libffi-dev libssl-dev libreadline-dev libsqlite3-dev \
+        libtk8.6 liblzma-dev zlib1g-dev \
+        libgdal-dev \
+        && rm -rf /var/lib/apt/lists/*
 
 # ---- Install all Python requirements ----
 COPY requirements/ /tmp/requirements/
@@ -31,7 +30,8 @@ RUN pip install --no-cache-dir -r /tmp/requirements/base.txt && \
     pip install --no-cache-dir -r /tmp/requirements/image-processing.txt && \
     pip install --no-cache-dir -r /tmp/requirements/remote-sensing.txt && \
     pip install --no-cache-dir -r /tmp/requirements/scientific.txt && \
-    pip install --no-cache-dir -r /tmp/requirements/distributed.txt
+    pip install --no-cache-dir -r /tmp/requirements/distributed.txt && \
+    pip install --no-cache-dir gdal==$(gdal-config --version)
 
 # ---- AI Framework packages (OpenMMLab ecosystem) ----
 # Install mmcv-full with NPU support first
