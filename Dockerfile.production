@@ -23,15 +23,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libgdal-dev \
         && rm -rf /var/lib/apt/lists/*
 
-# ---- Install all Python requirements ----
+# ---- Install Python requirements (separate RUN for debugging) ----
 COPY requirements/ /tmp/requirements/
 
-RUN pip install --no-cache-dir -r /tmp/requirements/base.txt && \
-    pip install --no-cache-dir -r /tmp/requirements/image-processing.txt && \
-    pip install --no-cache-dir -r /tmp/requirements/remote-sensing.txt && \
-    pip install --no-cache-dir -r /tmp/requirements/scientific.txt && \
-    pip install --no-cache-dir -r /tmp/requirements/distributed.txt && \
-    pip install --no-cache-dir gdal==$(gdal-config --version)
+RUN pip install --no-cache-dir -r /tmp/requirements/base.txt
+RUN pip install --no-cache-dir -r /tmp/requirements/image-processing.txt
+RUN pip install --no-cache-dir -r /tmp/requirements/remote-sensing.txt
+RUN pip install --no-cache-dir -r /tmp/requirements/scientific.txt
+RUN pip install --no-cache-dir -r /tmp/requirements/distributed.txt
 
 # ---- AI Framework packages (OpenMMLab ecosystem) ----
 # Install mmcv-full with NPU support first

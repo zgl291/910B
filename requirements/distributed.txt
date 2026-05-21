@@ -1,7 +1,6 @@
 # Distributed training dependencies
 # Note: HCCL is provided by CANN, not pip
-# horovod needs to be compiled with HCCL backend
-horovod>=0.28.0
+# horovod needs to be compiled from source with HCCL backend - install manually
 onnx>=1.12.0
 onnxruntime>=1.12.0
 inplace-abn>=1.1.0
