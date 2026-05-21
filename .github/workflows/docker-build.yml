@@ -14,49 +14,14 @@ env:
   IMAGE: ghcr.io/${{ github.repository }}
   TAG: ${{ github.event.inputs.docker_tag || 'latest' }}
 
-permissions:
-  contents: read
-  packages: write
-
 jobs:
-  # ================================================================
-  # Step 1: Sanity check
-  # ================================================================
-  sanity-check:
-    name: Sanity Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Test docker build
-        run: |
-          echo "FROM alpine:latest" > /tmp/test.Dockerfile
-          echo "RUN echo hello" >> /tmp/test.Dockerfile
-          docker build -f /tmp/test.Dockerfile -t test-build .
-          echo "Minimal build succeeded"
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push test image
-        run: |
-          docker tag test-build ${{ env.IMAGE }}:sanity
-          docker push ${{ env.IMAGE }}:sanity
-
-  # ================================================================
-  # Step 2: Build CPU test image
-  # ================================================================
   build-cpu:
     name: Build CPU Test Image
-    needs: sanity-check
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -66,9 +31,10 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.PAT }}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -78,14 +44,14 @@ jobs:
           tags: ${{ env.IMAGE }}:cpu-test-${{ env.TAG }}
           provenance: false
 
-  # ================================================================
-  # Step 3: Build ARM64 production image
-  # ================================================================
   build-arm64:
     name: Build ARM64 Production Image
     needs: build-cpu
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -107,9 +73,10 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.PAT }}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
