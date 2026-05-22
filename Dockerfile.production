@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libffi-dev libssl-dev libreadline-dev libsqlite3-dev \
         libtk8.6 liblzma-dev zlib1g-dev \
         libgdal-dev \
+        patch \
         && rm -rf /var/lib/apt/lists/*
 
 # ---- Install Python requirements (separate RUN for debugging) ----
@@ -49,11 +50,24 @@ RUN cd /opt && \
     pip install --no-cache-dir -v -e .
 
 # ---- apex (Ascend-compatible version) ----
+# The apex repo is a patch that builds NVIDIA apex with NPU support
 RUN cd /opt && \
     wget -q https://github.com/zgl291/apex/archive/refs/heads/master.tar.gz -O apex.tar.gz && \
     tar -xzf apex.tar.gz && mv apex-master apex && rm apex.tar.gz && \
     cd apex && \
-    bash scripts/build.sh --python=3.8
+    git clone https://github.com/NVIDIA/apex.git && \
+    cd apex && \
+    git checkout 4ef930c1c884fdca5f472ab2ce7cb9b505d26c1a && \
+    cd /opt/apex && \
+    cp patch/npu.patch apex/ && \
+    cd apex && \
+    patch -p1 < npu.patch && \
+    rm -rf npu.patch && \
+    cp -r /opt/apex/src/* . && \
+    cp -r /opt/apex/tests/* tests/ && \
+    pip install wheel && \
+    python3.8 setup.py --cpp_ext bdist_wheel && \
+    pip install --no-cache-dir dist/*.whl
 
 # ---- Copy workspace files ----
 COPY scripts/ /workspace/scripts/
