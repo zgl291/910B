@@ -50,7 +50,8 @@ RUN cd /opt && \
 
 # ---- apex (Ascend-compatible version) ----
 RUN cd /opt && \
-    git clone --depth 1 https://github.com/zgl291/apex.git && \
+    wget -q https://github.com/zgl291/apex/archive/refs/heads/master.tar.gz -O apex.tar.gz && \
+    tar -xzf apex.tar.gz && mv apex-master apex && rm apex.tar.gz && \
     cd apex && \
     pip install --no-cache-dir -v .
 
