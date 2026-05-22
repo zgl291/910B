@@ -50,7 +50,7 @@ RUN cd /opt && \
 
 # ---- apex (Ascend-compatible version) ----
 RUN cd /opt && \
-    git clone https://github.com/zgl291/apex.git && \
+    git clone --depth 1 https://github.com/zgl291/apex.git && \
     cd apex && \
     pip install --no-cache-dir -v .
 
