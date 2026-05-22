@@ -14,15 +14,17 @@ ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
 # ---- System packages ----
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
         cmake ninja-build gcc g++ gfortran make \
         perl vim openssh-client openssh-server \
         default-jre-headless git wget curl zip unzip \
         libffi-dev libssl-dev libreadline-dev libsqlite3-dev \
         libtk8.6 liblzma-dev zlib1g-dev \
-        libgdal-dev \
-        patch \
-        && rm -rf /var/lib/apt/lists/*
+        libgdal-dev && \
+    apt-get install -y --no-install-recommends patch || \
+        (apt-get update -y && apt-get install -y --fix-missing patch) && \
+    rm -rf /var/lib/apt/lists/*
 
 # ---- Install Python requirements (separate RUN for debugging) ----
 COPY requirements/ /tmp/requirements/
