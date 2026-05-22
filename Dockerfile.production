@@ -53,7 +53,7 @@ RUN cd /opt && \
     wget -q https://github.com/zgl291/apex/archive/refs/heads/master.tar.gz -O apex.tar.gz && \
     tar -xzf apex.tar.gz && mv apex-master apex && rm apex.tar.gz && \
     cd apex && \
-    pip install --no-cache-dir -v .
+    bash scripts/build.sh --python=3.8
 
 # ---- Copy workspace files ----
 COPY scripts/ /workspace/scripts/
